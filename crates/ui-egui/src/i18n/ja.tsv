@@ -2260,6 +2260,7 @@ key	Space	スペース
 	Printer paper and scaling may differ. Check driver settings.	プリンターの用紙や倍率は異なる場合があります。ドライバーの設定を確認してください。
 	Drawing scale changes. Use Actual size for full-scale plans.	図面の縮尺が変わります。原寸で印刷するには「実際のサイズ」を使用してください。
 	Reload documents when their files change on disk	ディスク上のファイルが変更されたら文書を再読み込みする
+	Show the community button in the title bar	タイトル バーにコミュニティ ボタンを表示する
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	このファイルはディスク上で変更されました。再読み込みすると新しいバージョンが表示されますが、未保存の変更は失われます。
 	Reload	再読み込み
 	Couldn't reload {name}: {e}	{name} を再読み込みできませんでした: {e}

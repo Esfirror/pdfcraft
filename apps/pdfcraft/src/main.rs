@@ -352,6 +352,8 @@ fn app_creator<'a>(
             app.restore(&json);
         }
         app.integrated_titlebar = integrated;
+        // File, Edit, View, Go… in the macOS menu bar as well as in the window.
+        app.native_menu_bar = cfg!(target_os = "macos");
         app.window_controls = window_controls;
         app.system_text_scale = text_scale::system();
         // Windows' Animation effects setting, which Preferences ▸ Animation effects follows unless

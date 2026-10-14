@@ -2259,6 +2259,7 @@ key	Space	Szóköz
 	Printer paper and scaling may differ. Check driver settings.	A nyomtató papírja és méretezése eltérhet. Ellenőrizze az illesztőprogram beállításait.
 	Drawing scale changes. Use Actual size for full-scale plans.	A rajz méretaránya változik. Méretarányos tervekhez használja a Tényleges méret beállítást.
 	Reload documents when their files change on disk	Dokumentumok újratöltése, ha a fájljuk megváltozik a lemezen
+	Show the community button in the title bar	Közösség gomb megjelenítése a címsorban
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Ez a fájl megváltozott a lemezen. Töltsd újra az új változat megtekintéséhez; a nem mentett módosításaid elvesznek.
 	Reload	Újratöltés
 	Couldn't reload {name}: {e}	{name} újratöltése nem sikerült: {e}

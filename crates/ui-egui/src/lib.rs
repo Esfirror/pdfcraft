@@ -85,6 +85,10 @@ mod icon_data;
 pub mod icons;
 pub mod last_session;
 pub mod motion;
+#[cfg(target_os = "macos")]
+mod native_menu;
+#[cfg(test)]
+mod native_menu_tests;
 mod page_selection_ui;
 mod pageboxes;
 mod palette;
@@ -551,6 +555,16 @@ pub struct PdfCraftApp {
     pub recent: Vec<RecentFile>,
     /// Preferences: reopen the files that were open when PdfCraft last closed (#442).
     pub reopen_last_session: bool,
+    /// Preferences: the Discord button in the title bar and the community card on Home.
+    /// Off by default in this build; Help ▸ Join the ArtCraft Discord stays either way.
+    pub show_discord: bool,
+    /// Show the commands in the macOS menu bar too (File, Edit, View, Go…). The desktop app
+    /// turns it on; tests and other hosts leave it off.
+    pub native_menu_bar: bool,
+    #[cfg(target_os = "macos")]
+    native_menu: Option<native_menu::NativeMenu>,
+    #[cfg(target_os = "macos")]
+    native_actions: Vec<native_menu::Action>,
     /// The files open when PdfCraft last closed, read from the settings for
     /// [`PdfCraftApp::reopen_last_files`].
     pub last_session: last_session::LastSession,
@@ -905,6 +919,12 @@ impl PdfCraftApp {
             all_tools_expanded: false,
             recent: Vec::new(),
             reopen_last_session: false,
+            show_discord: false,
+            native_menu_bar: false,
+            #[cfg(target_os = "macos")]
+            native_menu: None,
+            #[cfg(target_os = "macos")]
+            native_actions: Vec::new(),
             last_session: Default::default(),
             quit_session: None,
             reload_changed_files: true,
@@ -2096,7 +2116,7 @@ impl PdfCraftApp {
     /// Serialize the user's persistent state (recent files, theme). Local only.
     pub fn persist(&self) -> String {
         let trusted: Vec<String> = self.session.trusted_certificates().iter().map(pdfcraft_engine::sign::x509::to_pem).collect();
-        serde_json::json!({
+        let mut v = serde_json::json!({
             "docking": self.docking,
             "docking_left_open": self.left_open,
             "docking_right": self.right,
@@ -2155,8 +2175,12 @@ impl PdfCraftApp {
             "combine_zoom": self.combine_zoom,
             "comments_panel_closed": self.comments_panel_closed,
             "right_panel_closed": self.right_panel_closed,
-        })
-        .to_string()
+        });
+        // Outside the `json!` above, which is at the macro recursion limit.
+        if let Some(m) = v.as_object_mut() {
+            m.insert("show_discord".into(), self.show_discord.into());
+        }
+        v.to_string()
     }
 
     /// Restore state written by `persist`. Unknown or malformed data is ignored.
@@ -2186,6 +2210,9 @@ impl PdfCraftApp {
         }
         if let Some(on) = v["reopen_last_session"].as_bool() {
             self.reopen_last_session = on;
+        }
+        if let Some(on) = v["show_discord"].as_bool() {
+            self.show_discord = on;
         }
         self.last_session = last_session::LastSession::from_json(&v["last_session"]);
         if let Some(on) = v["system_title_bar"].as_bool() {
@@ -2745,6 +2772,8 @@ impl eframe::App for PdfCraftApp {
     /// would keep the place the pointer entered at: tell it where the pointer really is, so the
     /// page grid can show (and use) the gap under it.
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        #[cfg(target_os = "macos")]
+        self.poll_native_menu(ctx, raw);
         // Before egui reads this frame's wheel input.
         self.scroll_speed.apply(ctx, raw);
         if raw.hovered_files.is_empty() && raw.dropped_files.is_empty() {
@@ -2766,6 +2795,8 @@ impl eframe::App for PdfCraftApp {
         // Notices raised outside `ui` (opened files, OS events, the control channel) translate too.
         let lang = i18n::Lang::from_pref(&self.language);
         i18n::set_current(lang);
+        #[cfg(target_os = "macos")]
+        self.native_menu_frame(ctx);
         #[cfg(not(target_arch = "wasm32"))]
         {
             if let Some(worker) = &self.open_worker {

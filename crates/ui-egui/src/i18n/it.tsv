@@ -2269,6 +2269,7 @@ key	Space	Spazio
 	Printer paper and scaling may differ. Check driver settings.	Carta e scala della stampante possono differire. Controlla le impostazioni del driver.
 	Drawing scale changes. Use Actual size for full-scale plans.	La scala del disegno cambia. Usa Dimensioni effettive per le planimetrie in scala.
 	Reload documents when their files change on disk	Ricarica i documenti quando i loro file cambiano sul disco
+	Show the community button in the title bar	Mostra il pulsante della community nella barra del titolo
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Questo file è cambiato sul disco. Ricaricalo per vedere la nuova versione; le modifiche non salvate andranno perse.
 	Reload	Ricarica
 	Couldn't reload {name}: {e}	Impossibile ricaricare {name}: {e}

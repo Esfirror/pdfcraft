@@ -19,11 +19,29 @@ fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, P
 
 #[test]
 fn discord_button_in_the_top_bar_opens_discord() {
-    let mut h = harness(|_| {});
+    let mut h = harness(|app| app.show_discord = true);
     h.get_by_label("Discord").click();
     h.run_steps(2);
     assert_eq!(h.state().last_opened_url.as_deref(), Some(links::DISCORD));
     assert_eq!(links::DISCORD, "https://discord.gg/artcraft");
+}
+
+#[test]
+fn discord_button_and_home_card_are_hidden_by_default() {
+    let h = harness(|_| {});
+    assert_eq!(h.query_all_by_label("Discord").count(), 0, "no Discord button in the title bar");
+    assert_eq!(h.query_all_by_label("Join the ArtCraft community").count(), 0, "no community card on Home");
+    assert!(!h.state().show_discord);
+}
+
+#[test]
+fn show_discord_preference_round_trips() {
+    let mut app = PdfCraftApp::new();
+    app.show_discord = true;
+    let json = app.persist();
+    let mut restored = PdfCraftApp::new();
+    restored.restore(&json);
+    assert!(restored.show_discord);
 }
 
 #[test]
@@ -34,7 +52,7 @@ fn home_screen_links() {
         ("PdfCraft on GitHub", "https://github.com/storytold/pdfcraft"),
         ("ArtCraft website", "https://getartcraft.com"),
     ] {
-        let mut h = harness(|_| {});
+        let mut h = harness(|app| app.show_discord = true);
         h.get_by_label("Join the ArtCraft community");
         h.get_by_label(label).click();
         h.run_steps(2);

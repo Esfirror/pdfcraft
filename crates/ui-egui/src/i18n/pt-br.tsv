@@ -2262,6 +2262,7 @@ key	Space	Espaço
 	Printer paper and scaling may differ. Check driver settings.	O papel e a escala da impressora podem variar. Confira as configurações do driver.
 	Drawing scale changes. Use Actual size for full-scale plans.	A escala do desenho muda. Use Tamanho real para plantas em escala.
 	Reload documents when their files change on disk	Recarregar documentos quando os arquivos mudarem no disco
+	Show the community button in the title bar	Mostrar o botão da comunidade na barra de título
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Este arquivo foi alterado no disco. Recarregue-o para ver a nova versão; suas alterações não salvas serão perdidas.
 	Reload	Recarregar
 	Couldn't reload {name}: {e}	Não foi possível recarregar {name}: {e}

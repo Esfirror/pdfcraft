@@ -2269,6 +2269,7 @@ comment menu	Edit	Επεξεργασία
 	Printer paper and scaling may differ. Check driver settings.	Το χαρτί και η κλίμακα του εκτυπωτή μπορεί να διαφέρουν. Ελέγξτε τις ρυθμίσεις του προγράμματος οδήγησης.
 	Drawing scale changes. Use Actual size for full-scale plans.	Η κλίμακα του σχεδίου αλλάζει. Για σχέδια σε πλήρη κλίμακα χρησιμοποιήστε το Πραγματικό μέγεθος.
 	Reload documents when their files change on disk	Επαναφόρτωση εγγράφων όταν αλλάζουν τα αρχεία τους στον δίσκο
+	Show the community button in the title bar	Εμφάνιση του κουμπιού κοινότητας στη γραμμή τίτλου
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Αυτό το αρχείο άλλαξε στον δίσκο. Επαναφορτώστε το για να δείτε τη νέα έκδοση· οι μη αποθηκευμένες αλλαγές θα χαθούν.
 	Reload	Επαναφόρτωση
 	Couldn't reload {name}: {e}	Δεν ήταν δυνατή η επαναφόρτωση του {name}: {e}

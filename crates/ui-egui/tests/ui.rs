@@ -325,6 +325,7 @@ fn tabs_shrink_to_fit_then_arrows_step_through_them_and_open_stays_in_sight() {
     // buttons on the right, Open sits after them, and no arrows show.
     let name = |i: usize| format!("Statement {i} for the office records, scanned.pdf");
     let mut h = harness(move |app| {
+        app.show_discord = true;
         for i in 0..5 {
             app.open_bytes(&name(i), None, FIXTURE.to_vec()).unwrap();
         }

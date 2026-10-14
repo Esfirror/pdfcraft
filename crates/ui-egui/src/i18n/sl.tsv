@@ -2266,6 +2266,7 @@ key	Space	Preslednica
 	Printer paper and scaling may differ. Check driver settings.	Papir in merilo tiskalnika se lahko razlikujeta. Preverite nastavitve gonilnika.
 	Drawing scale changes. Use Actual size for full-scale plans.	Merilo risbe se spremeni. Za načrte v polnem merilu uporabite Dejansko velikost.
 	Reload documents when their files change on disk	Znova naloži dokumente, ko se njihove datoteke na disku spremenijo
+	Show the community button in the title bar	Pokaži gumb skupnosti v naslovni vrstici
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Ta datoteka se je na disku spremenila. Znova jo naložite, da vidite novo različico; neshranjene spremembe bodo izgubljene.
 	Reload	Znova naloži
 	Couldn't reload {name}: {e}	Datoteke {name} ni bilo mogoče znova naložiti: {e}

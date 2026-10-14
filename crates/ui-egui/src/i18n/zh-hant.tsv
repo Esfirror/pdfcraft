@@ -2134,6 +2134,7 @@ key	Space	空格
 	Tools	工具
 	Inspector	檢查器
 	Reload documents when their files change on disk	檔案在磁碟上變更時重新載入對應的文件
+	Show the community button in the title bar	在標題列中顯示社群按鈕
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	此檔案已在磁碟上變更。請重新載入以查看新版本；未儲存的變更將會遺失。
 	Reload	重新載入
 	Couldn't reload {name}: {e}	無法重新載入{name}：{e}

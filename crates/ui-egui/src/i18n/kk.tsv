@@ -2259,6 +2259,7 @@ key	Space	Бос орын
 	Printer paper and scaling may differ. Check driver settings.	Принтер қағазы мен масштабы өзгеше болуы мүмкін. Драйвер параметрлерін тексеріңіз.
 	Drawing scale changes. Use Actual size for full-scale plans.	Сызба масштабы өзгереді. Толық масштабты жоспарлар үшін Нақты өлшемді пайдаланыңыз.
 	Reload documents when their files change on disk	Дискідегі файлдары өзгергенде құжаттарды қайта жүктеу
+	Show the community button in the title bar	Тақырып жолағында қауымдастық түймесін көрсету
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Бұл файл дискіде өзгерді. Жаңа нұсқасын көру үшін оны қайта жүктеңіз; сақталмаған өзгерістер жоғалады.
 	Reload	Қайта жүктеу
 	Couldn't reload {name}: {e}	{name} қайта жүктеу мүмкін болмады: {e}

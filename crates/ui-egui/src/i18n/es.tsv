@@ -2135,6 +2135,7 @@ action wizard	Start	Iniciar
 	Home / End	Inicio / Fin
 	H / Space (hold)	H / Espacio (mantener)
 	Reload documents when their files change on disk	Recargar los documentos cuando sus archivos cambien en el disco
+	Show the community button in the title bar	Mostrar el botón de comunidad en la barra de título
 	This file changed on disk. Reload it to see the new version; your unsaved changes will be lost.	Este archivo ha cambiado en el disco. Recárgalo para ver la nueva versión; se perderán tus cambios sin guardar.
 	Reload	Recargar
 	Couldn't reload {name}: {e}	No se pudo recargar {name}: {e}
