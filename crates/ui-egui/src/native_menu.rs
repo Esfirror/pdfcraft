@@ -1,17 +1,21 @@
 //! The macOS menu bar: PdfCraft, File, Edit, View, Go, Pages, Window and Help, as native menus.
 //!
 //! The commands are the registry's (`pdfcraft_engine::commands`), the same ones the in-window
-//! Menu shows, with live labels and enablement. Items carry no key equivalents: the keyboard
-//! keeps going through egui exactly as before (text fields, form fields and the ⌘W rule in
-//! `registry_shortcuts` included), so a menu never takes a key away from the document.
+//! Menu shows, with live labels and enablement. Items show the registry's shortcuts as key
+//! equivalents. AppKit takes such a key before the window sees it, so a key equivalent is handed
+//! back to egui as the very key press it was: the keyboard keeps going through egui exactly as
+//! before (text fields, form fields and the ⌘W rule in `registry_shortcuts` included), and a
+//! menu never takes a key away from the document. Only a click runs the command directly.
 //!
 //! Built on the first frame (on the main thread, after AppKit has finished launching, so it
-//! replaces winit's default menu) and rebuilt when the interface language changes. Clicks arrive
-//! on a channel; `raw_input_hook` turns Cut / Copy / Paste / Select All into the input events the
-//! keyboard would have produced, and `logic` runs everything else.
+//! replaces winit's default menu) and rebuilt when the interface language changes. Clicks and
+//! key equivalents arrive on a channel; `raw_input_hook` turns keys and Cut / Copy / Paste /
+//! Select All into the input events the keyboard would have produced, and `logic` runs
+//! everything else.
 
 use std::sync::mpsc::{Receiver, Sender, channel};
 
+use muda::accelerator::{Accelerator, Code, Modifiers};
 use muda::{IsMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use pdfcraft_engine::commands;
 
@@ -61,6 +65,11 @@ pub(crate) enum Action {
     Panel(usize),
     /// Window ▸ Minimize, without AppKit's ⌘M (which stays the app's to use).
     Minimize,
+    /// A registry shortcut pressed while its item was the key equivalent: fed to egui as that key.
+    Key(commands::Shortcut),
+    /// PdfCraft ▸ Quit: closes the window the way its close button does, so unsaved changes are
+    /// asked about (#1136). AppKit's own Quit (`terminate:`) would end the process at once.
+    Quit,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -135,8 +144,8 @@ pub(crate) struct NativeMenu {
     _menu: Menu,
     /// Every submenu, kept alive for the same reason.
     _submenus: Vec<Submenu>,
-    events: Receiver<MenuEvent>,
-    actions: Vec<(muda::MenuId, Action)>,
+    events: Receiver<(MenuEvent, bool)>,
+    actions: Vec<Bound>,
     tracked: Vec<Tracked>,
     recent: Submenu,
     recent_paths: Option<Vec<String>>,
@@ -145,17 +154,26 @@ pub(crate) struct NativeMenu {
     lang: &'static str,
 }
 
+/// What an item does: when clicked, and when its key equivalent was pressed (if that differs).
+type Bound = (muda::MenuId, Action, Option<Action>);
+
 struct Builder {
-    actions: Vec<(muda::MenuId, Action)>,
+    actions: Vec<Bound>,
     tracked: Vec<Tracked>,
     seq: u64,
 }
 
 impl Builder {
     fn item(&mut self, label: &str, action: Action, when: When) -> MenuItem {
+        self.keyed_item(label, action, when, None, None)
+    }
+
+    /// An item with a key equivalent; `keyed` is what that key does when it differs from a click.
+    fn keyed_item(&mut self, label: &str, action: Action, when: When, accel: Option<Accelerator>, keyed: Option<Action>) -> MenuItem {
         self.seq = self.seq.saturating_add(1);
-        let item = MenuItem::with_id(format!("pdfcraft.{}", self.seq), label, matches!(when, When::Always), None);
-        self.actions.push((item.id().clone(), action));
+        let keyed = accel.and(keyed);
+        let item = MenuItem::with_id(format!("pdfcraft.{}", self.seq), label, matches!(when, When::Always), accel);
+        self.actions.push((item.id().clone(), action, keyed));
         let label_of = match when {
             When::Command(id) => Some(id),
             _ => None,
@@ -166,26 +184,118 @@ impl Builder {
 
     fn command(&mut self, spec: &'static commands::CommandSpec) -> MenuItem {
         let label = i18n::menu_label(spec.id, spec.label);
-        self.item(&label, Action::Command(spec.id), When::Command(spec.id))
+        let accel = spec.shortcut.and_then(accelerator);
+        self.keyed_item(&label, Action::Command(spec.id), When::Command(spec.id), accel, spec.shortcut.map(Action::Key))
     }
 
-    /// A registry menu's commands, with a separator wherever the id's group (`file.`, `export.`…)
-    /// changes, skipping `skip`.
+    /// A registry menu's commands in `sections`, skipping `skip`.
     fn registry(&mut self, menu: &Submenu, name: &str, skip: &[&str]) {
-        let mut group: Option<&str> = None;
-        for spec in commands::menu(name) {
-            if MOVED.contains(&spec.id) || skip.contains(&spec.id) {
-                continue;
-            }
-            let g = spec.id.split('.').next().unwrap_or(spec.id);
-            if group.is_some_and(|p| p != g) {
+        let specs = commands::menu(name).filter(|s| !MOVED.contains(&s.id) && !skip.contains(&s.id));
+        for (i, section) in sections(specs).into_iter().enumerate() {
+            if i > 0 {
                 append(menu, &PredefinedMenuItem::separator());
             }
-            group = Some(g);
-            let item = self.command(spec);
-            append(menu, &item);
+            for spec in section {
+                let item = self.command(spec);
+                append(menu, &item);
+            }
         }
     }
+}
+
+/// Commands split where the id's group (`file.`, `export.`…) changes. Runs of one-command groups
+/// share a section, so a menu doesn't wall single items off between separators.
+pub(crate) fn sections<'a>(specs: impl IntoIterator<Item = &'a commands::CommandSpec>) -> Vec<Vec<&'a commands::CommandSpec>> {
+    let mut groups: Vec<Vec<&commands::CommandSpec>> = Vec::new();
+    for spec in specs {
+        let g = spec.id.split('.').next().unwrap_or(spec.id);
+        match groups.last_mut() {
+            Some(last) if last.first().is_some_and(|p| p.id.split('.').next().unwrap_or(p.id) == g) => last.push(spec),
+            _ => groups.push(vec![spec]),
+        }
+    }
+    let mut out: Vec<Vec<&commands::CommandSpec>> = Vec::new();
+    let mut singles = false;
+    for group in groups {
+        let single = group.len() == 1;
+        match out.last_mut() {
+            Some(last) if single && singles => last.extend(group),
+            _ => out.push(group),
+        }
+        singles = single;
+    }
+    out
+}
+
+/// The key equivalent for a registry shortcut: ⌘ (with ⇧ and ⌃ as given) and a letter, digit,
+/// comma or Tab. Other keys (+, −, Delete…) stay egui's alone and show no equivalent.
+fn accelerator(s: commands::Shortcut) -> Option<Accelerator> {
+    let code = match s.key {
+        "," => Code::Comma,
+        "Tab" => Code::Tab,
+        k => {
+            let mut chars = k.chars();
+            let (Some(c), None) = (chars.next(), chars.next()) else { return None };
+            letter_or_digit(c)?
+        }
+    };
+    let mut mods = Modifiers::empty();
+    if s.command {
+        mods |= Modifiers::META;
+    }
+    if s.shift {
+        mods |= Modifiers::SHIFT;
+    }
+    if s.mac_ctrl {
+        mods |= Modifiers::CONTROL;
+    }
+    // A bare key would fire while typing in a field, which egui's handling never does.
+    (s.command || s.mac_ctrl).then(|| Accelerator::new(mods, code))
+}
+
+fn letter_or_digit(c: char) -> Option<Code> {
+    const LETTERS: [Code; 26] = [
+        Code::KeyA,
+        Code::KeyB,
+        Code::KeyC,
+        Code::KeyD,
+        Code::KeyE,
+        Code::KeyF,
+        Code::KeyG,
+        Code::KeyH,
+        Code::KeyI,
+        Code::KeyJ,
+        Code::KeyK,
+        Code::KeyL,
+        Code::KeyM,
+        Code::KeyN,
+        Code::KeyO,
+        Code::KeyP,
+        Code::KeyQ,
+        Code::KeyR,
+        Code::KeyS,
+        Code::KeyT,
+        Code::KeyU,
+        Code::KeyV,
+        Code::KeyW,
+        Code::KeyX,
+        Code::KeyY,
+        Code::KeyZ,
+    ];
+    const DIGITS: [Code; 10] =
+        [Code::Digit0, Code::Digit1, Code::Digit2, Code::Digit3, Code::Digit4, Code::Digit5, Code::Digit6, Code::Digit7, Code::Digit8, Code::Digit9];
+    let c = c.to_ascii_uppercase();
+    if c.is_ascii_uppercase() {
+        LETTERS.get(usize::from(c as u8 - b'A')).copied()
+    } else if c.is_ascii_digit() {
+        DIGITS.get(usize::from(c as u8 - b'0')).copied()
+    } else {
+        None
+    }
+}
+
+fn cmd(key: Code) -> Option<Accelerator> {
+    Some(Accelerator::new(Modifiers::META, key))
 }
 
 /// Appending only fails for an item already in the menu, which this module never does; a
@@ -200,10 +310,10 @@ impl NativeMenu {
     /// Build the menu bar and install it. `None` off the main thread (tests, headless hosts).
     /// `events` is the previous bar's channel: muda takes the click handler only once per
     /// process, so a rebuilt bar keeps receiving on the first one.
-    pub(crate) fn install(ctx: &egui::Context, events: Option<Receiver<MenuEvent>>) -> Option<Self> {
+    pub(crate) fn install(ctx: &egui::Context, events: Option<Receiver<(MenuEvent, bool)>>) -> Option<Self> {
         objc2::MainThreadMarker::new()?;
         let events = events.unwrap_or_else(|| {
-            let (tx, rx) = channel::<MenuEvent>();
+            let (tx, rx) = channel::<(MenuEvent, bool)>();
             set_handler(tx, ctx.clone());
             rx
         });
@@ -225,24 +335,20 @@ impl NativeMenu {
         append(&app_menu, &PredefinedMenuItem::hide_others(Some(tr("Hide Others").as_str())));
         append(&app_menu, &PredefinedMenuItem::show_all(Some(tr("Show All").as_str())));
         append(&app_menu, &PredefinedMenuItem::separator());
-        append(&app_menu, &PredefinedMenuItem::quit(Some(tr("Quit PdfCraft").as_str())));
+        append(&app_menu, &b.keyed_item(&tr("Quit PdfCraft"), Action::Quit, When::Always, cmd(Code::KeyQ), None));
 
         // File, with Open Recent as a live submenu after Open…
         let file = Submenu::new(tr("File"), true);
         let recent = Submenu::new(i18n::menu_label("file.open_recent", "Open Recent"), false);
-        let mut group: Option<&str> = None;
-        for spec in commands::menu("File") {
-            if MOVED.contains(&spec.id) {
-                continue;
-            }
-            let g = spec.id.split('.').next().unwrap_or(spec.id);
-            if group.is_some_and(|p| p != g) {
+        for (i, section) in sections(commands::menu("File").filter(|s| !MOVED.contains(&s.id))).into_iter().enumerate() {
+            if i > 0 {
                 append(&file, &PredefinedMenuItem::separator());
             }
-            group = Some(g);
-            append(&file, &b.command(spec));
-            if spec.id == "file.open" {
-                append(&file, &recent);
+            for spec in section {
+                append(&file, &b.command(spec));
+                if spec.id == "file.open" {
+                    append(&file, &recent);
+                }
             }
         }
 
@@ -250,10 +356,15 @@ impl NativeMenu {
         let edit = Submenu::new(tr("Edit"), true);
         b.registry(&edit, "Edit", &[]);
         append(&edit, &PredefinedMenuItem::separator());
-        append(&edit, &b.item(&tr("Cut"), Action::Input(InputKind::Cut), When::Always));
-        append(&edit, &b.item(&tr("Copy"), Action::Input(InputKind::Copy), When::Always));
-        append(&edit, &b.item(&tr("Paste"), Action::Input(InputKind::Paste), When::Always));
-        append(&edit, &b.item(&tr("Select All"), Action::Input(InputKind::SelectAll), When::Always));
+        // The same input events a click makes are what egui-winit makes of the keys.
+        for (label, kind, key) in [
+            ("Cut", InputKind::Cut, Code::KeyX),
+            ("Copy", InputKind::Copy, Code::KeyC),
+            ("Paste", InputKind::Paste, Code::KeyV),
+            ("Select All", InputKind::SelectAll, Code::KeyA),
+        ] {
+            append(&edit, &b.keyed_item(&tr(label), Action::Input(kind), When::Always, cmd(key), None));
+        }
 
         // View: zoom, page display, the registry's View commands, theme and side panels.
         let view = Submenu::new(tr("View"), true);
@@ -348,11 +459,12 @@ impl NativeMenu {
     }
 
     /// The actions chosen since the last call.
+    /// A pressed key equivalent comes back as that key where it does something else than a click.
     pub(crate) fn take_actions(&mut self) -> Vec<Action> {
         let mut out = Vec::new();
-        while let Ok(e) = self.events.try_recv() {
-            if let Some((_, a)) = self.actions.iter().find(|(id, _)| id == e.id()) {
-                out.push(a.clone());
+        while let Ok((e, from_key)) = self.events.try_recv() {
+            if let Some((_, click, keyed)) = self.actions.iter().find(|(id, _, _)| id == e.id()) {
+                out.push(keyed.as_ref().filter(|_| from_key).unwrap_or(click).clone());
             }
         }
         out
@@ -396,17 +508,17 @@ impl NativeMenu {
         if self.recent_paths.as_ref() != Some(&paths) {
             // Bounded: each pass removes one item of a finite submenu.
             while self.recent.remove_at(0).is_some() {}
-            self.actions.retain(|(_, a)| !matches!(a, Action::Recent(_) | Action::Command("file.clear_recent")));
+            self.actions.retain(|(_, a, _)| !matches!(a, Action::Recent(_) | Action::Command("file.clear_recent")));
             for r in &app.recent {
                 let label = if r.name.is_empty() { r.path.clone() } else { r.name.clone() };
                 let item = MenuItem::with_id(self.next_id("recent"), label, true, None);
-                self.actions.push((item.id().clone(), Action::Recent(r.path.clone())));
+                self.actions.push((item.id().clone(), Action::Recent(r.path.clone()), None));
                 append(&self.recent, &item);
             }
             if !app.recent.is_empty() {
                 append(&self.recent, &PredefinedMenuItem::separator());
                 let clear = MenuItem::with_id(self.next_id("recent"), tr("Clear Recent Files"), true, None);
-                self.actions.push((clear.id().clone(), Action::Command("file.clear_recent")));
+                self.actions.push((clear.id().clone(), Action::Command("file.clear_recent"), None));
                 append(&self.recent, &clear);
             }
             self.recent.set_enabled(!app.recent.is_empty());
@@ -415,12 +527,35 @@ impl NativeMenu {
     }
 }
 
-/// Clicks go to `tx`, and wake the event loop so the next frame sees them.
-fn set_handler(tx: Sender<MenuEvent>, ctx: egui::Context) {
+/// Clicks and key equivalents go to `tx`, and wake the event loop so the next frame sees them.
+fn set_handler(tx: Sender<(MenuEvent, bool)>, ctx: egui::Context) {
     MenuEvent::set_event_handler(Some(move |e: MenuEvent| {
-        let _ = tx.send(e);
+        let _ = tx.send((e, from_key()));
         ctx.request_repaint();
     }));
+}
+
+/// Whether the event AppKit is handling (the one that chose the item) is a key press.
+fn from_key() -> bool {
+    use objc2_app_kit::{NSApplication, NSEventType};
+    let Some(mtm) = objc2::MainThreadMarker::new() else { return false };
+    NSApplication::sharedApplication(mtm).currentEvent().is_some_and(|e| e.r#type() == NSEventType::KeyDown)
+}
+
+/// The key press and release a registry shortcut is, as `registry_shortcuts` matches it.
+pub(crate) fn shortcut_events(s: commands::Shortcut) -> Vec<egui::Event> {
+    let Some(key) = egui::Key::from_name(s.key) else { return Vec::new() };
+    let mut modifiers = egui::Modifiers::NONE;
+    if s.command {
+        modifiers |= egui::Modifiers::COMMAND;
+    }
+    if s.shift {
+        modifiers |= egui::Modifiers::SHIFT;
+    }
+    if s.mac_ctrl {
+        modifiers |= egui::Modifiers::CTRL;
+    }
+    [true, false].map(|pressed| egui::Event::Key { key, physical_key: Some(key), pressed, repeat: false, modifiers }).to_vec()
 }
 
 /// The input events the keyboard would have produced for `kind` (as egui-winit makes them).
@@ -485,7 +620,12 @@ impl PdfCraftApp {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
                 }
             }
-            Action::Input(_) => {}
+            Action::Quit => {
+                if let Some(ctx) = &self.ctx {
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+            }
+            Action::Input(_) | Action::Key(_) => {}
         }
     }
 }
@@ -504,6 +644,7 @@ impl PdfCraftApp {
             };
             match action {
                 Action::Input(kind) => raw.events.extend(input_events(kind)),
+                Action::Key(s) => raw.events.extend(shortcut_events(s)),
                 a => self.native_actions.push(a),
             }
         }
@@ -526,5 +667,56 @@ impl PdfCraftApp {
             menu.sync(self);
             self.native_menu = Some(menu);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ids(sections: &[Vec<&commands::CommandSpec>]) -> Vec<Vec<&'static str>> {
+        sections.iter().map(|s| s.iter().map(|c| c.id).collect()).collect()
+    }
+
+    #[test]
+    fn one_command_groups_share_a_section() {
+        let view = sections(commands::menu("View"));
+        // No section is a lone command between two others that are lone commands too.
+        for w in ids(&view).windows(2) {
+            assert!(!(w[0].len() == 1 && w[1].len() == 1), "{w:?}");
+        }
+        // Nothing is dropped or reordered.
+        let flat: Vec<&str> = ids(&view).concat();
+        let all: Vec<&str> = commands::menu("View").map(|c| c.id).collect();
+        assert_eq!(flat, all);
+    }
+
+    #[test]
+    fn shortcuts_become_key_equivalents_with_their_modifiers() {
+        let s = |key, command, shift, mac_ctrl| commands::Shortcut { command, shift, mac_ctrl, key };
+        assert_eq!(accelerator(s("O", true, false, false)), Some(Accelerator::new(Modifiers::META, Code::KeyO)));
+        assert_eq!(accelerator(s("S", true, true, false)), Some(Accelerator::new(Modifiers::META | Modifiers::SHIFT, Code::KeyS)));
+        assert_eq!(accelerator(s(",", true, false, false)), Some(Accelerator::new(Modifiers::META, Code::Comma)));
+        assert_eq!(accelerator(s("Tab", false, false, true)), Some(Accelerator::new(Modifiers::CONTROL, Code::Tab)));
+        assert_eq!(accelerator(s("3", true, false, false)), Some(Accelerator::new(Modifiers::META, Code::Digit3)));
+        // Keys egui keeps to itself, and bare keys that would fire while typing.
+        assert_eq!(accelerator(s("+", true, false, false)), None);
+        assert_eq!(accelerator(s("Delete", true, false, false)), None);
+        assert_eq!(accelerator(s("H", false, false, false)), None);
+    }
+
+    #[test]
+    fn a_key_equivalent_is_the_key_registry_shortcuts_matches() {
+        let save = commands::command("file.save").and_then(|c| c.shortcut).expect("Save has a shortcut");
+        let events = shortcut_events(save);
+        assert_eq!(events.len(), 2);
+        let ctx = egui::Context::default();
+        let raw = egui::RawInput { events, ..Default::default() };
+        let mut hit = false;
+        let mut out = ctx.run_ui(raw, |ui| {
+            hit = ui.input_mut(|i| i.consume_shortcut(&egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S)));
+        });
+        out.textures_delta.clear();
+        assert!(hit);
     }
 }
