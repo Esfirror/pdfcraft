@@ -2455,3 +2455,18 @@ animation effects	Off	Вимкнено
 	Make properties default	Зробити властивості типовими
 	Pages selected	Вибрані сторінки
 	Page properties	Властивості сторінки
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Служби
+	Hide PdfCraft	Сховати PdfCraft
+	Hide Others	Сховати інші
+	Show All	Показати всі
+	Quit PdfCraft	Вийти з PdfCraft
+	Window	Вікно
+	Enter Full Screen	Увімкнути повноекранний режим
+	Bring All to Front	Усі на передній план
+	Go	Перейти
+	First page	Перша сторінка
+	Last page	Остання сторінка
+	Close Window	Закрити вікно
+	Paste	Вставити

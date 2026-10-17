@@ -92,6 +92,9 @@ mod home;
 mod icon_data;
 pub mod icons;
 pub mod last_session;
+// Only macOS shows it; every platform's tests check it.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+mod menu_bar;
 pub mod motion;
 #[cfg(target_os = "macos")]
 mod native_menu;
@@ -579,7 +582,7 @@ pub struct PdfCraftApp {
     #[cfg(target_os = "macos")]
     native_menu: Option<native_menu::NativeMenu>,
     #[cfg(target_os = "macos")]
-    native_actions: Vec<native_menu::Action>,
+    native_actions: Vec<menu_bar::Action>,
     /// The files open when PdfCraft last closed, read from the settings for
     /// [`PdfCraftApp::reopen_last_files`].
     pub last_session: last_session::LastSession,

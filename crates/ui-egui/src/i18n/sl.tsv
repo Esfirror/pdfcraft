@@ -2438,3 +2438,18 @@ animation effects	Off	Izklopljeni
 	Make properties default	Nastavi lastnosti kot privzete
 	Pages selected	Izbrane strani
 	Page properties	Lastnosti strani
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Storitve
+	Hide PdfCraft	Skrij PdfCraft
+	Hide Others	Skrij druge
+	Show All	Pokaži vse
+	Quit PdfCraft	Končaj PdfCraft
+	Window	Okno
+	Enter Full Screen	Vklopi celozaslonski način
+	Bring All to Front	Vse v ospredje
+	Go	Pojdi
+	First page	Prva stran
+	Last page	Zadnja stran
+	Close Window	Zapri okno
+	Paste	Prilepi

@@ -2433,3 +2433,18 @@ animation effects	Off	オフ
 	Make properties default	プロパティをデフォルトに設定
 	Pages selected	選択したページ
 	Page properties	ページのプロパティ
+
+# macOS native menu bar: items only the system menu shows.
+	Services	サービス
+	Hide PdfCraft	PdfCraftを非表示
+	Hide Others	ほかを非表示
+	Show All	すべてを表示
+	Quit PdfCraft	PdfCraftを終了
+	Window	ウインドウ
+	Enter Full Screen	フルスクリーンにする
+	Bring All to Front	すべてを手前に移動
+	Go	移動
+	First page	最初のページ
+	Last page	最後のページ
+	Close Window	ウインドウを閉じる
+	Paste	ペースト

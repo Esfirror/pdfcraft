@@ -2383,3 +2383,18 @@ animation effects	Off	關
 	Make properties default	將內容設為預設
 	Pages selected	選取的頁面
 	Page properties	頁面屬性
+
+# macOS native menu bar: items only the system menu shows.
+	Services	服務
+	Hide PdfCraft	隱藏 PdfCraft
+	Hide Others	隱藏其他
+	Show All	顯示全部
+	Quit PdfCraft	結束 PdfCraft
+	Window	視窗
+	Enter Full Screen	進入全螢幕
+	Bring All to Front	全部移至最前
+	Go	前往
+	First page	第一頁
+	Last page	最後一頁
+	Close Window	關閉視窗
+	Paste	貼上

@@ -2342,3 +2342,18 @@ animation effects	Off	ఆఫ్
 	Make properties default	లక్షణాలను డిఫాల్ట్‌గా చేయి
 	Pages selected	ఎంచుకున్న పేజీలు
 	Page properties	పేజీ లక్షణాలు
+
+# macOS native menu bar: items only the system menu shows.
+	Services	సేవలు
+	Hide PdfCraft	PdfCraftను దాచు
+	Hide Others	ఇతరాలను దాచు
+	Show All	అన్నీ చూపు
+	Quit PdfCraft	PdfCraft నుండి నిష్క్రమించు
+	Window	విండో
+	Enter Full Screen	పూర్తి స్క్రీన్‌లోకి వెళ్లు
+	Bring All to Front	అన్నింటినీ ముందుకు తీసుకురా
+	Go	వెళ్లు
+	First page	మొదటి పేజీ
+	Last page	చివరి పేజీ
+	Close Window	విండోను మూసివేయి
+	Paste	అతికించు

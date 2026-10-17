@@ -2432,3 +2432,18 @@ animation effects	Off	Ki
 	Make properties default	Tulajdonságok beállítása alapértelmezettként
 	Pages selected	Kijelölt oldalak
 	Page properties	Oldaltulajdonságok
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Szolgáltatások
+	Hide PdfCraft	PdfCraft elrejtése
+	Hide Others	Többi elrejtése
+	Show All	Az összes megjelenítése
+	Quit PdfCraft	Kilépés a PdfCraftból
+	Window	Ablak
+	Enter Full Screen	Teljes képernyős mód
+	Bring All to Front	Az összes előrehozása
+	Go	Ugrás
+	First page	Első oldal
+	Last page	Utolsó oldal
+	Close Window	Ablak bezárása
+	Paste	Beillesztés

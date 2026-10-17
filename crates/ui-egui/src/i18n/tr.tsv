@@ -2429,3 +2429,18 @@ animation effects	Off	Kapalı
 	Make properties default	Özellikleri varsayılan yap
 	Pages selected	Seçilen sayfalar
 	Page properties	Sayfa özellikleri
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Servisler
+	Hide PdfCraft	PdfCraft’i Gizle
+	Hide Others	Diğerlerini Gizle
+	Show All	Tümünü Göster
+	Quit PdfCraft	PdfCraft’ten Çık
+	Window	Pencere
+	Enter Full Screen	Tam Ekrana Geç
+	Bring All to Front	Tümünü Öne Getir
+	Go	Git
+	First page	İlk sayfa
+	Last page	Son sayfa
+	Close Window	Pencereyi Kapat
+	Paste	Yapıştır

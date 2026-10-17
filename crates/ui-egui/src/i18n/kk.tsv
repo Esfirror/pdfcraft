@@ -2431,3 +2431,18 @@ animation effects	Off	Өшірулі
 	Make properties default	Қасиеттерді әдепкі ету
 	Pages selected	Таңдалған беттер
 	Page properties	Бет қасиеттері
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Қызметтер
+	Hide PdfCraft	PdfCraft жасыру
+	Hide Others	Басқаларын жасыру
+	Show All	Барлығын көрсету
+	Quit PdfCraft	PdfCraft-тан шығу
+	Window	Терезе
+	Enter Full Screen	Толық экранға өту
+	Bring All to Front	Барлығын алдыға шығару
+	Go	Өту
+	First page	Бірінші бет
+	Last page	Соңғы бет
+	Close Window	Терезені жабу
+	Paste	Қою

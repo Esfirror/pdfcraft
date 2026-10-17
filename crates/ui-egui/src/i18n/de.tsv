@@ -2434,3 +2434,18 @@ animation effects	Off	Aus
 	Make properties default	Eigenschaften als Standard festlegen
 	Pages selected	Ausgewählte Seiten
 	Page properties	Seiteneigenschaften
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Dienste
+	Hide PdfCraft	PdfCraft ausblenden
+	Hide Others	Andere ausblenden
+	Show All	Alle einblenden
+	Quit PdfCraft	PdfCraft beenden
+	Window	Fenster
+	Enter Full Screen	Vollbildmodus aktivieren
+	Bring All to Front	Alle nach vorne bringen
+	Go	Gehe zu
+	First page	Erste Seite
+	Last page	Letzte Seite
+	Close Window	Fenster schließen
+	Paste	Einsetzen

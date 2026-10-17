@@ -2433,3 +2433,18 @@ animation effects	Off	Désactivés
 	Make properties default	Définir comme propriétés par défaut
 	Pages selected	Pages sélectionnées
 	Page properties	Propriétés de la page
+
+# macOS native menu bar: items only the system menu shows.
+	Services	Services
+	Hide PdfCraft	Masquer PdfCraft
+	Hide Others	Masquer les autres
+	Show All	Tout afficher
+	Quit PdfCraft	Quitter PdfCraft
+	Window	Fenêtre
+	Enter Full Screen	Passer en mode plein écran
+	Bring All to Front	Tout ramener au premier plan
+	Go	Aller
+	First page	Première page
+	Last page	Dernière page
+	Close Window	Fermer la fenêtre
+	Paste	Coller
