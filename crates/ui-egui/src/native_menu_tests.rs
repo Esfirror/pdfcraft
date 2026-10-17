@@ -259,6 +259,24 @@ fn every_label_only_the_bar_uses_is_in_every_catalog() {
 }
 
 #[test]
+fn the_mac_bundle_declares_every_interface_language() {
+    // Without it AppKit shows its own items (Window ▸ Minimize All…) in English.
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../packaging/macos/Info.plist.in");
+    let plist = std::fs::read_to_string(path).expect("Info.plist template");
+    let declared = plist.split("<key>CFBundleLocalizations</key>").nth(1).and_then(|rest| rest.split("</array>").next()).unwrap_or_default();
+    for lang in i18n::Lang::all() {
+        // Apple writes the region and script with capitals: pt-BR, zh-Hans.
+        let apple = match lang.code() {
+            "pt-br" => "pt-BR",
+            "zh-hans" => "zh-Hans",
+            "zh-hant" => "zh-Hant",
+            code => code,
+        };
+        assert!(declared.contains(&format!("<string>{apple}</string>")), "{apple} is missing from CFBundleLocalizations");
+    }
+}
+
+#[test]
 fn the_bar_has_the_mac_menus_in_order() {
     let titles: Vec<String> = bar().into_iter().map(|m| m.title).collect();
     assert_eq!(titles, ["PdfCraft", "File", "Edit", "View", "Go", "Pages", "Window", "Help"]);
