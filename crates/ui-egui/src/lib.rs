@@ -54,6 +54,7 @@ mod crop;
 mod drag_pointer;
 mod export_ui;
 mod js_ui;
+mod mac_lights;
 mod marks_ui;
 mod measure_ui;
 mod ocr_ui;
@@ -607,6 +608,8 @@ pub struct PdfCraftApp {
     pub toast: Option<(String, f64)>,
     /// Whether the macOS title bar is drawn by us (traffic lights over our tab strip).
     pub integrated_titlebar: bool,
+    /// Where AppKit drew the traffic lights last frame (`None`: not known, use the defaults).
+    pub mac_lights: Option<chrome::MacLights>,
     /// Set when the desktop leaves the window frame to the app (GNOME on Wayland): the tab strip
     /// carries these window buttons and the window's edges resize it.
     pub window_controls: Option<window_controls::Layout>,
@@ -970,6 +973,7 @@ impl PdfCraftApp {
             pinned: Default::default(),
             toast: None,
             integrated_titlebar: false,
+            mac_lights: None,
             window_controls: None,
             system_title_bar: false,
             app_frame_shown: None,
@@ -2953,6 +2957,10 @@ impl eframe::App for PdfCraftApp {
         i18n::set_current(lang);
         #[cfg(target_os = "macos")]
         self.native_menu_frame(ctx);
+        // The tab strip lines up with the traffic lights where AppKit really drew them.
+        if self.integrated_titlebar {
+            self.mac_lights = mac_lights::measure(ctx.zoom_factor());
+        }
         #[cfg(not(target_arch = "wasm32"))]
         {
             if let Some(worker) = &self.open_worker {

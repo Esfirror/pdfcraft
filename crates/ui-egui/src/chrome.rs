@@ -19,8 +19,45 @@ const MAC_LIGHT: f32 = 12.0;
 const MAC_LIGHT_PITCH: f32 = 20.0;
 const MAC_LIGHTS_LEFT: f32 = 10.0;
 /// Where the strip's content starts to the right of the traffic lights: the end of the three
-/// lights plus the same gap the lights keep from the top of the window.
+/// lights plus the same gap the lights keep from the top of the window. The strip uses
+/// [`MacLights::content_left`], which is this for the default lights.
+#[cfg(test)]
 pub const MAC_CONTENT_LEFT: f32 = MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_LIGHT + (MAC_TITLE_BAR - MAC_LIGHT) / 2.0;
+
+/// Where AppKit put the traffic lights, in egui points from the window's top-left. macOS 26 and
+/// later draw them larger and lower than the constants above (14 pt, 23 pt apart, centred 15.75
+/// pt down on macOS 27), so the app reads them (`mac_lights::measure`) and the strip follows.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MacLights {
+    /// The zoom button's right edge.
+    pub right: f32,
+    /// The buttons' vertical centre.
+    pub center_y: f32,
+    pub diameter: f32,
+}
+
+impl MacLights {
+    /// The layout the constants describe, for when the system can't be asked (tests, headless).
+    pub const DEFAULT: Self = Self { right: MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_LIGHT, center_y: MAC_TITLE_BAR / 2.0, diameter: MAC_LIGHT };
+
+    /// Measured values a title bar can use: finite, positive and within a window's top band.
+    /// Anything else (a hidden button, a zoom that makes no sense) keeps the default.
+    pub fn sane(self) -> Option<Self> {
+        let ok = |v: f32, max: f32| v.is_finite() && v > 0.0 && v <= max;
+        (ok(self.right, 120.0) && ok(self.center_y, 40.0) && ok(self.diameter, 30.0) && self.diameter / 2.0 < self.center_y).then_some(self)
+    }
+
+    /// The strip's height: the band the lights are centred in, never below the standard 28 pt.
+    pub fn band(self) -> f32 {
+        (2.0 * self.center_y).max(MAC_TITLE_BAR)
+    }
+
+    /// Where content starts: after the lights, with the gap they keep from the top of the band.
+    pub fn content_left(self) -> f32 {
+        (self.right + (self.band() - self.diameter) / 2.0).min(f32::from(i8::MAX))
+    }
+}
+
 /// The strip and its controls everywhere else.
 const TAB_STRIP: f32 = 38.0;
 const TAB_HEIGHT: f32 = 30.0;
@@ -31,10 +68,13 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
     // macOS: the strip is the 28 pt title bar, so the traffic lights are centred in it; tabs and
     // buttons shrink to keep a margin above and below.
     let mac = cfg!(target_os = "macos") && app.integrated_titlebar;
-    let left = if mac { MAC_CONTENT_LEFT as i8 } else { 8 };
-    let (tab_h, button) = if mac { (MAC_TITLE_BAR - 2.0, 24.0) } else { (TAB_HEIGHT, STRIP_BUTTON) };
+    let lights = app.mac_lights.unwrap_or(MacLights::DEFAULT);
+    let band = lights.band();
+    // Rounded up so the gap after the lights is never smaller than the one above them.
+    let left = if mac { lights.content_left().ceil() as i8 } else { 8 };
+    let (tab_h, button) = if mac { (band - 2.0, 24.0) } else { (TAB_HEIGHT, STRIP_BUTTON) };
     egui::Panel::top("tab_strip")
-        .exact_size(if mac { MAC_TITLE_BAR } else { TAB_STRIP })
+        .exact_size(if mac { band } else { TAB_STRIP })
         .frame(egui::Frame::NONE.fill(t.titlebar).inner_margin(egui::Margin { left, right: 10, top: 0, bottom: 0 }))
         .show(ui, |ui| {
             let full = ui.max_rect();
@@ -838,7 +878,7 @@ fn rail_view_menu(ui: &mut egui::Ui, view: &mut DocView) -> Option<&'static str>
 
 #[cfg(test)]
 mod tab_widths {
-    use super::{MAC_CONTENT_LEFT, MAC_LIGHT, MAC_LIGHT_PITCH, MAC_LIGHTS_LEFT, MAC_TITLE_BAR, tab_cap};
+    use super::{MAC_CONTENT_LEFT, MAC_LIGHT, MAC_LIGHT_PITCH, MAC_LIGHTS_LEFT, MAC_TITLE_BAR, MacLights, tab_cap};
 
     /// Tabs that fit keep their own widths.
     #[test]
@@ -918,5 +958,29 @@ mod tab_widths {
         assert_eq!(MAC_CONTENT_LEFT - lights_end, margin);
         // `egui::Margin` is in `i8`.
         assert!(MAC_CONTENT_LEFT <= f32::from(i8::MAX));
+        // The default layout is that one.
+        assert_eq!(MacLights::DEFAULT.band(), MAC_TITLE_BAR);
+        assert_eq!(MacLights::DEFAULT.content_left(), MAC_CONTENT_LEFT);
+    }
+
+    #[test]
+    fn the_strip_follows_the_lights_the_system_draws() {
+        // macOS 27: 14 pt lights, the zoom button ending at 68.5 pt, centred 15.75 pt down.
+        let tahoe = MacLights { right: 68.5, center_y: 15.75, diameter: 14.0 }.sane().expect("plausible");
+        assert_eq!(tahoe.band(), 31.5, "the lights stay centred in the strip");
+        let gap_above = tahoe.center_y - tahoe.diameter / 2.0;
+        assert_eq!(tahoe.content_left() - tahoe.right, gap_above, "the same gap after them as above them");
+        // A small centre never shrinks the bar below the standard 28 pt.
+        assert_eq!(MacLights { right: 60.0, center_y: 12.0, diameter: 12.0 }.band(), MAC_TITLE_BAR);
+        // Nonsense keeps the default.
+        for bad in [
+            MacLights { right: f32::NAN, ..tahoe },
+            MacLights { right: -1.0, ..tahoe },
+            MacLights { center_y: 500.0, ..tahoe },
+            MacLights { diameter: 0.0, ..tahoe },
+            MacLights { diameter: 40.0, ..tahoe },
+        ] {
+            assert_eq!(bad.sane(), None, "{bad:?}");
+        }
     }
 }

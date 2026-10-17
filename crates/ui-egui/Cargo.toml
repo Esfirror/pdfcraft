@@ -56,7 +56,8 @@ muda = { version = "0.21", default-features = false }
 # Where the pointer is while files are dragged over the window (winit doesn't say): safe AppKit
 # calls only. All three are already in the tree through arboard and rfd.
 objc2 = "0.6"
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSApplication", "NSEvent", "NSResponder", "NSScreen"] }
+# Where AppKit put the traffic lights (src/mac_lights.rs): NSWindow, NSButton and the views under them.
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSApplication", "NSButton", "NSControl", "NSEvent", "NSResponder", "NSScreen", "NSView", "NSWindow"] }
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSArray", "NSGeometry"] }
 # A plain fsync where a volume refuses the full flush `sync_all` asks for (SMB, FUSE); already in
 # the tree through pdfcraft-cli.
