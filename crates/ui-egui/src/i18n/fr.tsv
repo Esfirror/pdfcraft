@@ -2796,3 +2796,5 @@ certificate	Version	Version
 	field names can't contain a period: {name}	les noms de champ ne peuvent pas contenir de point : {name}
 	two cells would both be named {name}	deux cellules porteraient le nom {name}
 	a field named {name} already exists	un champ nommé {name} existe déjà
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Afficher les menus dans la barre des menus de macOS

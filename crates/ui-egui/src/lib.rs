@@ -598,6 +598,10 @@ pub struct PdfCraftApp {
     /// Show the commands in the macOS menu bar too (File, Edit, View, Go…). The desktop app
     /// turns it on; tests and other hosts leave it off.
     pub native_menu_bar: bool,
+    /// Preferences (macOS): the menus in the system menu bar, or behind the window's Menu
+    /// button. Read only where `native_menu_bar` is on; the app and Window menus stay in the
+    /// system bar either way (`menu_bar::system_only`).
+    pub system_menu_bar: bool,
     #[cfg(target_os = "macos")]
     native_menu: Option<native_menu::NativeMenu>,
     #[cfg(target_os = "macos")]
@@ -1007,6 +1011,7 @@ impl PdfCraftApp {
             reopen_last_session: false,
             show_discord: false,
             native_menu_bar: false,
+            system_menu_bar: true,
             #[cfg(target_os = "macos")]
             native_menu: None,
             #[cfg(target_os = "macos")]
@@ -2455,6 +2460,7 @@ impl PdfCraftApp {
         // Outside the `json!` above, which is at the macro recursion limit.
         if let Some(m) = v.as_object_mut() {
             m.insert("show_discord".into(), self.show_discord.into());
+            m.insert("system_menu_bar".into(), self.system_menu_bar.into());
         }
         // Set apart: one more key inside the macro above passes serde_json's recursion limit.
         v["default_page_gaps"] = serde_json::Value::Bool(self.view_defaults.show_page_gaps);
@@ -2501,6 +2507,9 @@ impl PdfCraftApp {
         }
         if let Some(on) = v["show_discord"].as_bool() {
             self.show_discord = on;
+        }
+        if let Some(on) = v["system_menu_bar"].as_bool() {
+            self.system_menu_bar = on;
         }
         self.last_session = last_session::LastSession::from_json(&v["last_session"]);
         if let Some(on) = v["system_title_bar"].as_bool() {

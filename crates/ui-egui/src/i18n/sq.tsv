@@ -2515,3 +2515,5 @@ animation effects	Off	Joaktiv
 	Last page	Faqja e fundit
 	Close Window	Mbyll dritaren
 	Paste	Ngjit
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Shfaq menytë në shiritin e menyve të macOS

@@ -2440,3 +2440,5 @@ animation effects	Off	ఆఫ్
 	field names can't contain a period: {name}	ఫీల్డ్ పేర్లలో చుక్క ఉండకూడదు: {name}
 	two cells would both be named {name}	రెండు గడులకూ {name} అనే పేరు వస్తుంది
 	a field named {name} already exists	{name} అనే ఫీల్డ్ ఇప్పటికే ఉంది
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	మెనూలను macOS మెనూ బార్‌లో చూపించు

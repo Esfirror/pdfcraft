@@ -2788,3 +2788,5 @@ theme	Appearance	Aspecte
 	First page	Primera pàgina
 	Last page	Última pàgina
 	Close Window	Tanca la finestra
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Mostra els menús a la barra de menús del macOS

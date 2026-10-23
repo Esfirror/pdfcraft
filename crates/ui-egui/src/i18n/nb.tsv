@@ -2708,3 +2708,5 @@ key	Space	Mellomrom
 	First page	Første side
 	Last page	Siste side
 	Close Window	Lukk vindu
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Vis menyene i menylinjen i macOS

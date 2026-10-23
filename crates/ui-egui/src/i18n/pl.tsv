@@ -2627,3 +2627,5 @@ animation effects	Off	Wyłączone
 	field names can't contain a period: {name}	nazwy pól nie mogą zawierać kropki: {name}
 	two cells would both be named {name}	dwie komórki miałyby nazwę {name}
 	a field named {name} already exists	pole o nazwie {name} już istnieje
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Pokazuj menu na pasku menu macOS

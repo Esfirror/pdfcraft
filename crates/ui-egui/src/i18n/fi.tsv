@@ -2797,3 +2797,5 @@ theme	Appearance	Teema
 	First page	Ensimmäinen sivu
 	Last page	Viimeinen sivu
 	Close Window	Sulje ikkuna
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Näytä valikot macOSin valikkorivillä

@@ -2695,3 +2695,5 @@ theme	Appearance	ลักษณะที่ปรากฏ
 	First page	หน้าแรก
 	Last page	หน้าสุดท้าย
 	Close Window	ปิดหน้าต่าง
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	แสดงเมนูในแถบเมนูของ macOS

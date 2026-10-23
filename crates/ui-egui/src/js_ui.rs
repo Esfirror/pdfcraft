@@ -395,6 +395,10 @@ pub(crate) fn preferences_body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tok
     #[cfg(not(target_arch = "wasm32"))]
     ui.add(widgets::checkbox(&mut app.reload_changed_files, tl!("Reload documents when their files change on disk")));
     ui.add(widgets::checkbox(&mut app.show_discord, tl!("Show the community button in the title bar")));
+    // Off, the menus are behind the window's Menu button again; the bar follows on the next frame.
+    if app.native_menu_bar {
+        ui.add(widgets::checkbox(&mut app.system_menu_bar, tl!("Show the menus in the macOS menu bar")));
+    }
     ui.horizontal(|ui| {
         ui.label(tl!("Scroll speed (mouse wheel and arrow keys)"));
         for speed in crate::scroll_speed::ScrollSpeed::ALL {

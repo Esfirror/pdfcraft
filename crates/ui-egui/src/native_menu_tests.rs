@@ -287,3 +287,27 @@ fn the_bar_has_the_mac_menus_in_order() {
     assert!(items(&app_menu.entries).iter().any(|i| i.action == Action::Command("help.check_updates")));
     assert!(app_menu.entries.iter().any(|e| matches!(e, Entry::System(menu_bar::System::Services, _))));
 }
+
+#[test]
+fn menus_in_the_window_leave_the_app_and_window_menus_in_the_bar() {
+    let titles: Vec<String> = menu_bar::system_only(bar()).into_iter().map(|m| m.title).collect();
+    assert_eq!(titles, ["PdfCraft", "Window"]);
+    // Quit stays up there, so ⌘Q still asks about unsaved changes (#1136).
+    let menus = menu_bar::system_only(bar());
+    let app_menu = menus.first().expect("app menu");
+    assert!(items(&app_menu.entries).iter().any(|i| i.action == Action::Quit));
+}
+
+#[test]
+fn the_menu_bar_preference_moves_the_menus_and_is_remembered() {
+    let mut app = PdfCraftApp::new();
+    assert!(!app.menus_in_system_bar(), "hosts without the bar keep the window's Menu");
+    app.native_menu_bar = true;
+    assert!(app.menus_in_system_bar(), "on by default where the bar exists");
+    app.system_menu_bar = false;
+    assert!(!app.menus_in_system_bar());
+
+    let mut restored = PdfCraftApp::new();
+    restored.restore(&app.persist());
+    assert!(!restored.system_menu_bar);
+}

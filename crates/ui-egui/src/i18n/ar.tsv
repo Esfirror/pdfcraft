@@ -2806,3 +2806,5 @@ certificate	Version	الإصدار
 	field names can't contain a period: {name}	لا يمكن أن تحتوي أسماء الحقول على نقطة: {name}
 	two cells would both be named {name}	ستحمل خليتان الاسم نفسه {name}
 	a field named {name} already exists	يوجد حقل باسم {name} بالفعل
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	إظهار القوائم في شريط قوائم macOS

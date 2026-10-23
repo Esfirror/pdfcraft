@@ -2788,3 +2788,5 @@ theme	Appearance	Aspect
 	First page	Prima pagină
 	Last page	Ultima pagină
 	Close Window	Închidere fereastră
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Afișare meniuri în bara de meniu macOS

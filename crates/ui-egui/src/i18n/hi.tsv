@@ -2764,3 +2764,5 @@ theme	Appearance	स्वरूप
 	First page	पहला पृष्ठ
 	Last page	अंतिम पृष्ठ
 	Close Window	विंडो बंद करें
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	मेनू macOS मेनू बार में दिखाएँ

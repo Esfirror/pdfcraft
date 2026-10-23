@@ -363,6 +363,12 @@ pub(crate) fn bar() -> Vec<Menu> {
     ]
 }
 
+/// What stays in the system bar when Preferences put the menus in the window: the app menu, so
+/// ⌘Q still asks about unsaved changes (#1136), and the Window menu, which the window has no copy of.
+pub(crate) fn system_only(menus: Vec<Menu>) -> Vec<Menu> {
+    menus.into_iter().filter(|m| matches!(m.role, Role::App | Role::Window)).collect()
+}
+
 /// Every item of `entries`, submenus included, in order.
 #[cfg(test)]
 pub(crate) fn items(entries: &[Entry]) -> Vec<&Item> {
@@ -469,6 +475,12 @@ pub(crate) struct ItemState {
 }
 
 impl PdfCraftApp {
+    /// Whether the menus are in the macOS menu bar, so the window shows Home instead of its Menu
+    /// button: the host has the bar, and Preferences didn't move the menus into the window.
+    pub(crate) fn menus_in_system_bar(&self) -> bool {
+        self.native_menu_bar && self.system_menu_bar
+    }
+
     /// Whether the menu bar's commands must wait: a dialog, a prompt or the command palette has
     /// the keyboard, and nothing may act on the document underneath it.
     pub(crate) fn menu_blocked(&self) -> bool {

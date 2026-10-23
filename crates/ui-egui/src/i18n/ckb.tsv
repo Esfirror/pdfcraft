@@ -2727,3 +2727,5 @@ certificate	Version	وەشان
 	First page	یەکەم پەڕە
 	Last page	دوایین پەڕە
 	Close Window	داخستنی پەنجەرە
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	پیشاندانی لیستەکان لە شریتی لیستی macOS

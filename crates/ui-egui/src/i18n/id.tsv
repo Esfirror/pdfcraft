@@ -2765,3 +2765,5 @@ theme	Appearance	Tampilan
 	First page	Halaman pertama
 	Last page	Halaman terakhir
 	Close Window	Tutup Jendela
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	Tampilkan menu di bilah menu macOS

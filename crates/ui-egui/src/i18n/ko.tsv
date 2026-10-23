@@ -2764,3 +2764,5 @@ theme	Appearance	모양
 	First page	첫 페이지
 	Last page	마지막 페이지
 	Close Window	윈도우 닫기
+# Preferences: where the menus go on macOS (#80).
+	Show the menus in the macOS menu bar	macOS 메뉴 막대에 메뉴 표시

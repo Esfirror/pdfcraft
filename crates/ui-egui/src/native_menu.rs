@@ -67,6 +67,8 @@ pub(crate) struct NativeMenu {
     seq: u64,
     /// The interface language (its code) the labels are in.
     lang: &'static str,
+    /// Every menu, or only `menu_bar::system_only`'s.
+    full: bool,
 }
 
 /// Appending only fails for an item already in the menu, which this module never does; a
@@ -142,10 +144,11 @@ impl Builder {
 }
 
 impl NativeMenu {
-    /// Build the menu bar and install it. `None` off the main thread (tests, headless hosts).
-    /// `events` is the previous bar's channel: muda takes the click handler only once per
-    /// process, so a rebuilt bar keeps receiving on the first one.
-    pub(crate) fn install(ctx: &egui::Context, events: Option<Receiver<(MenuEvent, bool)>>) -> Option<Self> {
+    /// Build the menu bar and install it: every menu when `full`, else `menu_bar::system_only`'s.
+    /// `None` off the main thread (tests, headless hosts). `events` is the previous bar's channel:
+    /// muda takes the click handler only once per process, so a rebuilt bar keeps receiving on
+    /// the first one.
+    pub(crate) fn install(ctx: &egui::Context, events: Option<Receiver<(MenuEvent, bool)>>, full: bool) -> Option<Self> {
         objc2::MainThreadMarker::new()?;
         let events = events.unwrap_or_else(|| {
             let (tx, rx) = channel::<(MenuEvent, bool)>();
@@ -155,7 +158,8 @@ impl NativeMenu {
         let mut b = Builder { tracked: Vec::new(), submenus: Vec::new(), recent: None, seq: 0 };
         let menu = Menu::new();
         let mut roles = Vec::new();
-        for m in menu_bar::bar() {
+        let menus = if full { menu_bar::bar() } else { menu_bar::system_only(menu_bar::bar()) };
+        for m in menus {
             let s = Submenu::new(&m.title, true);
             b.fill(&s, m.entries);
             if let Err(e) = menu.append(&s) {
@@ -182,6 +186,7 @@ impl NativeMenu {
             recent_paths: None,
             seq: b.seq,
             lang: crate::i18n::current().code(),
+            full,
         })
     }
 
@@ -199,9 +204,9 @@ impl NativeMenu {
         out
     }
 
-    /// Whether the interface language changed since the bar was built.
-    pub(crate) fn stale(&self) -> bool {
-        self.lang != crate::i18n::current().code()
+    /// Whether the interface language, or where the menus go (`full`), changed since the bar was built.
+    pub(crate) fn stale(&self, full: bool) -> bool {
+        self.lang != crate::i18n::current().code() || self.full != full
     }
 
     /// Bring labels, enablement, check marks and Open Recent in line with the app.
@@ -293,15 +298,16 @@ impl PdfCraftApp {
         }
     }
 
-    /// Each frame: build (or, after a language change, rebuild) the bar, run what was chosen,
-    /// and bring labels, enablement and check marks up to date.
+    /// Each frame: build (or, after a language change or the menus moving, rebuild) the bar, run
+    /// what was chosen, and bring labels, enablement and check marks up to date.
     pub(crate) fn native_menu_frame(&mut self, ctx: &egui::Context) {
         if !self.native_menu_bar {
             return;
         }
-        if self.native_menu.as_ref().is_none_or(NativeMenu::stale) {
+        let full = self.menus_in_system_bar();
+        if self.native_menu.as_ref().is_none_or(|m| m.stale(full)) {
             let events = self.native_menu.take().map(|m| m.events);
-            self.native_menu = NativeMenu::install(ctx, events);
+            self.native_menu = NativeMenu::install(ctx, events, full);
         }
         for action in std::mem::take(&mut self.native_actions) {
             self.run_menu_action(action);
