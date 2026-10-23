@@ -218,6 +218,7 @@ fn a_clicked_command_waits_for_a_form_field_being_typed_in() {
         press: None,
         calendar: None,
         calendar_rect: None,
+        calendar_text: None,
     });
     app.run_menu_action(Action::Command("file.save"));
     let doc = app.views[0].id;
