@@ -1,6 +1,8 @@
 *~
 plan/
 /target
+# A second build directory (the upstream PR worktree builds here, apart from /target).
+/target-pr
 /dist
 /corpus
 /log
